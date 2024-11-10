@@ -1,0 +1,41 @@
+<odoo>
+    <!-- Tree View for Lighting Products -->
+    <record id="view_lighting_product_tree" model="ir.ui.view">
+        <field name="name">lighting.product.tree</field>
+        <field name="model">lighting.product</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Lighting Products">
+                <field name="name"/>
+                <field name="description"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View for Lighting Products -->
+    <record id="view_lighting_product_form" model="ir.ui.view">
+        <field name="name">lighting.product.form</field>
+        <field name="model">lighting.product</field>
+        <field name="arch" type="xml">
+            <form string="Lighting Product">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to Open Tree View -->
+    <record id="action_lighting_product_tree" model="ir.actions.act_window">
+        <field name="name">Lighting Products</field>
+        <field name="res_model">lighting.product</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu Item for Lighting Products -->
+    <menuitem id="menu_lighting_products" name="Lighting Products" parent="base.menu_sales"
+              action="action_lighting_product_tree"/>
+</odoo>
