@@ -1,41 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Tree View for Lighting Products -->
-    <record id="view_lighting_product_tree" model="ir.ui.view">
-        <field name="name">lighting.product.tree</field>
+    <!-- Lighting Product List View -->
+    <record id="view_lighting_product_list" model="ir.ui.view">
+        <field name="name">lighting.product.list</field>
         <field name="model">lighting.product</field>
-        <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Lighting Products">
+            <list>
                 <field name="name"/>
                 <field name="description"/>
-            </tree>
+                <field name="gldf_file_id"/>
+            </list>
         </field>
     </record>
 
-    <!-- Form View for Lighting Products -->
+    <!-- Lighting Product Form View -->
     <record id="view_lighting_product_form" model="ir.ui.view">
         <field name="name">lighting.product.form</field>
         <field name="model">lighting.product</field>
         <field name="arch" type="xml">
-            <form string="Lighting Product">
+            <form>
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Product Name"/>
+                        </h1>
+                    </div>
                     <group>
-                        <field name="name"/>
-                        <field name="description"/>
+                        <group>
+                            <field name="description"/>
+                            <field name="gldf_file_id"/>
+                        </group>
+                        <group>
+                            <field name="technical_data"/>
+                            <field name="active"/>
+                        </group>
                     </group>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <!-- Action to Open Tree View -->
-    <record id="action_lighting_product_tree" model="ir.actions.act_window">
+    <!-- Lighting Product Search View -->
+    <record id="view_lighting_product_search" model="ir.ui.view">
+        <field name="name">lighting.product.search</field>
+        <field name="model">lighting.product</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="gldf_file_id"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_lighting_product" model="ir.actions.act_window">
         <field name="name">Lighting Products</field>
         <field name="res_model">lighting.product</field>
         <field name="view_mode">tree,form</field>
     </record>
-
-    <!-- Menu Item for Lighting Products -->
-    <menuitem id="menu_lighting_products" name="Lighting Products" parent="base.menu_sales"
-              action="action_lighting_product_tree"/>
 </odoo>

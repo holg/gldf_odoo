@@ -1,34 +1,96 @@
+# models/gldf_file.py
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 import base64
+import os
+import tempfile
 import gldf_rs_python
+import json
+
 
 class GLDFFile(models.Model):
     _name = 'gldf.file'
     _description = 'GLDF File'
+    _inherit = ['mail.thread']
 
-    name = fields.Char(string='File Name', required=True)
-    upload_date = fields.Datetime(string='Upload Date', default=fields.Datetime.now)
-    file_data = fields.Binary(string='File Data', required=True)
-    json_data = fields.Text(string='JSON Data', readonly=True)
-    product_ids = fields.One2many('lighting.product', 'gldf_file_id', string='Products')
+    name = fields.Char(
+        string='File Name',
+        required=True,
+        tracking=True
+    )
+    upload_date = fields.Datetime(
+        string='Upload Date',
+        default=fields.Datetime.now,
+        tracking=True
+    )
+    file_data = fields.Binary(
+        string='File Data',
+        required=True,
+        attachment=True
+    )
+    json_data = fields.Json(
+        string='JSON Data',
+        readonly=True
+    )
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('processed', 'Processed'),
+        ('error', 'Error')
+    ], default='draft')
 
-    @api.model
-    def create(self, vals):
+    product_ids = fields.One2many(
+        'lighting.product',
+        'gldf_file_id',
+        string='Products'
+    )
+
+    product_count = fields.Integer(
+        compute='_compute_product_count',
+        string='Product Count'
+    )
+
+    @api.depends('product_ids')
+    def _compute_product_count(self):
+        for record in self:
+            record.product_count = len(record.product_ids)
+
+    def action_process_file(self):
+        self.ensure_one()
         try:
-            # Decode the uploaded file
-            file_content = base64.b64decode(vals['file_data'])
-            file_path = '/tmp/uploaded_file.gldf'
+            with tempfile.NamedTemporaryFile(suffix='.gldf', delete=False) as temp_file:
+                file_content = base64.b64decode(self.file_data)
+                temp_file.write(file_content)
+                temp_file.flush()
 
-            # Save the file temporarily
-            with open(file_path, 'wb') as f:
-                f.write(file_content)
+                # Convert GLDF to JSON
+                json_data = gldf_rs_python.gldf_to_json(temp_file.name)
+                self.json_data = json.loads(json_data)
 
-            # Use gldf_rs_python to convert GLDF to JSON
-            json_data = gldf_rs_python.gldf_to_json(file_path)
-            vals['json_data'] = json_data
+                # Create products from JSON data
+                self._create_products_from_json()
+
+                self.state = 'processed'
         except Exception as e:
+            self.state = 'error'
             raise ValidationError(f"Failed to process GLDF file: {str(e)}")
+        finally:
+            if 'temp_file' in locals():
+                os.unlink(temp_file.name)
 
-        # Create the GLDFFile record
-        return super(GLDFFile, self).create(vals)
+    def _create_products_from_json(self):
+        if not self.json_data:
+            return
+
+        try:
+            product_data = self.json_data.get('ProductDefinitions', {}).get('ProductMetaData', {})
+            self.env['lighting.product'].create({
+                'name': product_data.get('Name', 'Unknown Product'),
+                'description': product_data.get('Description', ''),
+                'technical_data': str(product_data.get('technical_data', {})),
+                'gldf_file_id': self.id,
+                })
+        except Exception as e:
+            raise ValidationError(f"Failed to create products from JSON: {str(e)}")
+
+
+# models/lighting_product.py

@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gldf_file_user,gldf.file.user,model_gldf_file,base.group_user,1,1,1,1
+access_lighting_product_user,lighting.product.user,model_lighting_product,base.group_user,1,1,1,1
